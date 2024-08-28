@@ -1,5 +1,7 @@
 import requests
-import os
+import base64
+import urllib.parse
+import json
 
 class CxReportClientV1:
     def __init__(self, base_url:str, workspace_id:int, token:str):
@@ -15,12 +17,29 @@ class CxReportClientV1:
     def __get_url_with_workspace(self, url:str):
         return f"{self.url}/api/v1/ws/{self.workspace_id}/{url}"
 
-    def download_pdf(self, reportId:int, save_path: str):
+    def get_pdf(self, reportId: int,  query_params: dict = None):
         try:
             headers = self.__get_headers()
 
             url = self.__get_url_with_workspace(f"reports/{reportId}/pdf")
 
+            # Attach optional query parameters
+            if query_params:
+                params = {}
+                if 'tempDataId' in query_params and isinstance(query_params['tempDataId'], int):
+                    params['tempDataId'] = query_params['tempDataId']
+
+                if 'params' in query_params and isinstance(query_params['params'], dict):
+                    # Encode the params object to a base64 JSON string
+                    json_params = json.dumps(query_params['params'])
+                    encoded_params = base64.urlsafe_b64encode(json_params.encode()).decode()
+                    params['params'] = encoded_params
+
+                # Append the query parameters to the URL
+                url = f"{url}?{urllib.parse.urlencode(params)}"
+                print(url)
+
+    
             response = requests.get(url, headers=headers, verify=False)
             response.raise_for_status()
 
@@ -30,17 +49,8 @@ class CxReportClientV1:
 
             if "application/pdf" not in response.headers.get("Content-Type"):
                 raise RuntimeError("Invalid content type")
-            
 
-            content_disposition = response.headers.get("Content-Disposition")
-            if content_disposition and 'filename=' in content_disposition:
-                filename = content_disposition.split("filename=")[1].split(";")[0].replace('"', '')
-                save_path = os.path.join(save_path, filename)
-
-            with open(save_path, 'wb') as pdf_file:
-                pdf_file.write(response.content)
-
-            print(f"PDF downloaded and saved to {save_path}")
+            return response.content
 
         except requests.exceptions.HTTPError as http_err:
             raise RuntimeError(f"HTTP error occurred: {http_err}") from http_err
