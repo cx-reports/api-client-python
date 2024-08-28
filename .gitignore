@@ -1,1 +1,5 @@
 .vscode
+.env
+tests.py
+__pycache__
+*.pdf
