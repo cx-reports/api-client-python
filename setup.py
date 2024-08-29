@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setup(
     name="cxreports_api_client",
     description="Connect to CxReports API from your application.",
-    version="0.0.1",
+    version="0.0.2",
     package_dir={"": "cxreports_api_client"},
     packages=find_packages(where="cxreports_api_client"),
     long_description=long_description,
