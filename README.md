@@ -1,6 +1,6 @@
 # CxReportClientV1 Usage Example
 
- `cx-reports-api` is a Python library that provides a simple and intuitive interface for interacting with the cxReports application’s API. This library allows you to perform various operations on cxReports, such as retrieving reports, sending data, and generating PDFs.
+ `cx-reports-api` is a Python library that provides a simple and intuitive interface for interacting with the CxReports application’s API. This library allows you to perform various operations on CxReports, such as retrieving reports, sending data, and generating PDFs.
 
 ## Usage
 ```python
