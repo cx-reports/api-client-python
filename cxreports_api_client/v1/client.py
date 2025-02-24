@@ -17,18 +17,18 @@ class CxReportClientV1:
         workspace_id (int): The workspace ID for the API context.
         token (str): The authentication token used for API requests.
     """
-    def __init__(self, base_url:str, workspace_id:int, token:str):
+    def __init__(self, base_url:str, default_workspace_id:int, token:str):
         self.url = base_url
         self.token = token
-        self.workspace_id = workspace_id
+        self.workspace_id = default_workspace_id
 
     def __get_headers(self):
         return {
             "Authorization": f"Bearer {self.token}",
         }
     
-    def __get_url_with_workspace(self, url:str):
-        return f"{self.url}/api/v1/ws/{self.workspace_id}/{url}"
+    def __get_url_with_workspace(self, url:str, workspace_id:int = None):
+        return f"{self.url}/api/v1/ws/{self.workspace_id if workspace_id == None else workspace_id}/{url}"
     
     def __handle_requests_exceptions(func):
         @wraps(func)
@@ -46,7 +46,7 @@ class CxReportClientV1:
         return wrapper
 
     @__handle_requests_exceptions
-    def get_pdf(self, reportId: int, query_params: dict = None):
+    def get_pdf(self, reportId: int, query_params: dict = None, workspace_id:int = None):
         """
         Fetch a PDF report.
 
@@ -61,7 +61,7 @@ class CxReportClientV1:
             RuntimeError: If any request or processing error occurs.
         """
         headers = self.__get_headers()
-        url = self.__get_url_with_workspace(f"reports/{reportId}/pdf")
+        url = self.__get_url_with_workspace(f"reports/{reportId}/pdf", workspace_id)
 
         url = self.__append_query_params(url, query_params)
         print(url)
@@ -78,10 +78,9 @@ class CxReportClientV1:
         return response.content
 
     @__handle_requests_exceptions
-    def get_report_types(self):
+    def get_report_types(self, workspace_id:int = None):
         headers = self.__get_headers()
-
-        url =  f"{self.url}/api/v1/ws/{self.workspace_id}/report-types"
+        url = self.__get_url_with_workspace("report-types", workspace_id)
 
         response = requests.get(url, headers=headers, verify=False)
         response.raise_for_status()
@@ -115,7 +114,7 @@ class CxReportClientV1:
         return response.json()
             
     @__handle_requests_exceptions
-    def get_reports(self, type: str):
+    def get_reports(self, type: str, workspace_id:int = None):
         """
         Fetch the list of reports by type.
 
@@ -129,7 +128,7 @@ class CxReportClientV1:
             RuntimeError: If any request or processing error occurs.
         """
         headers = self.__get_headers()
-        url = f"{self.url}/api/v1/ws/{self.workspace_id}/reports?type={type}"
+        url = self.__get_url_with_workspace(f"reports?type={type}", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
         response.raise_for_status()
 
@@ -185,7 +184,7 @@ class CxReportClientV1:
         response = requests.post(url, headers=headers, json=data, verify=False)
         response.raise_for_status()
         
-            # Check if the response content is HTML
+        # If content type is HTML, then the user is not authenticated
         if response.headers.get('Content-Type', '').lower().startswith('text/html'):
             raise RuntimeError("Unauthenticated.")
 
