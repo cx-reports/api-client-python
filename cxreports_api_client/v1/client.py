@@ -49,7 +49,7 @@ class CxReportClientV1:
         return wrapper
 
     @__handle_requests_exceptions
-    def get_pdf(self, reportId: int, query_params: dict = None, workspace_id:int = None):
+    def get_pdf(self, reportId: int, params: dict = None, workspace_id:int = None):
         """
         Fetch a PDF report.
 
@@ -66,7 +66,7 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"reports/{reportId}/pdf", workspace_id)
 
-        url = self.__append_query_params(url, query_params)
+        url = self.__append_query_params(url, params)
         print(url)
 
         response = requests.get(url, headers=headers, verify=False)
