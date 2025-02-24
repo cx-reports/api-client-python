@@ -30,6 +30,9 @@ class CxReportClientV1:
     def __get_url_with_workspace(self, url:str, workspace_id:int = None):
         return f"{self.url}/api/v1/ws/{self.workspace_id if workspace_id == None else workspace_id}/{url}"
     
+    def __get_preview_url(self, url:str, workspace_id:int = None):
+        return f"{self.url}/ws/{self.workspace_id if workspace_id == None else workspace_id}/{url}"
+    
     def __handle_requests_exceptions(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -190,6 +193,27 @@ class CxReportClientV1:
 
         return response.json()
     
+    def get_preview_url(self, report_id:int, query_params:dict = None, workspace_id:int = None):
+        """
+        Get the preview URL for a report.
+
+        Args:
+            report_id (int): The ID of the report.
+            query_params (Optional[Dict[str, Any]]): Optional query parameters for the request.
+
+        Returns:
+            str: The preview URL.
+
+        Raises:
+            RuntimeError: If any request or processing error occurs.
+        """
+        url = self.__get_preview_url(f"reports/{report_id}/preview", workspace_id)
+        nonce_token = self.create_auth_token()['nonce']
+        query_params = query_params or {}
+        query_params['nonce'] = nonce_token
+        url = self.__append_query_params(url, query_params)
+        return url
+    
     
     
     def __append_query_params(self, url: str, query_params: Dict[str, Any]) -> str:
@@ -215,5 +239,16 @@ class CxReportClientV1:
             json_params = json.dumps(query_params['params'])
             encoded_params = base64.urlsafe_b64encode(json_params.encode()).decode()
             params['params'] = encoded_params
+            
+        if 'nonce' in query_params and isinstance(query_params['nonce'], str):
+            params['nonce'] = query_params['nonce']
+            
+        if 'data' in query_params and isinstance(query_params['data'], str):
+            params['data'] = query_params['data']
+            
+        if 'timezone' in query_params and isinstance(query_params['timezone'], str):
+            params['timezone'] = query_params['timezone']
 
         return f"{url}?{urllib.parse.urlencode(params)}"
+    
+    
