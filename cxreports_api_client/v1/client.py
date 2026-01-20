@@ -48,6 +48,24 @@ class CxReportClientV1:
                 raise RuntimeError(f"An error occurred: {req_err}") from req_err
         return wrapper
 
+    def __check_authentication(self, response):
+        """
+        Check if the response indicates an authentication failure.
+
+        Args:
+            response: The response object from requests.
+
+        Raises:
+            RuntimeError: If the response indicates unauthenticated access.
+        """
+        # Check status code first (401 = Unauthorized, 403 = Forbidden)
+        if response.status_code in (401, 403):
+            raise RuntimeError("Unauthenticated.")
+
+        # Fallback: Check content type for HTML (backwards compatibility)
+        if response.headers.get('Content-Type', '').lower().startswith('text/html'):
+            raise RuntimeError("Unauthenticated.")
+
     @__handle_requests_exceptions
     def get_pdf(self, reportId: int, params: dict = None, workspace_id:int = None):
         """
@@ -72,8 +90,7 @@ class CxReportClientV1:
         response = requests.get(url, headers=headers, verify=False)
         response.raise_for_status()
 
-        if response.headers.get('Content-Type', '').lower().startswith('text/html'):
-            raise RuntimeError("Unauthenticated.")
+        self.__check_authentication(response)
 
         if "application/pdf" not in response.headers.get("Content-Type", "").lower():
             raise RuntimeError("Invalid content type, expected PDF")
@@ -88,9 +105,7 @@ class CxReportClientV1:
         response = requests.get(url, headers=headers, verify=False)
         response.raise_for_status()
 
-            # Check if the response content is HTML
-        if response.headers.get('Content-Type', '').lower().startswith('text/html'):
-            raise RuntimeError("Unauthenticated.")
+        self.__check_authentication(response)
 
         return response.json()
 
@@ -110,9 +125,7 @@ class CxReportClientV1:
         response = requests.get(url, headers=headers, verify=False)
         response.raise_for_status()
 
-            # Check if the response content is HTML
-        if response.headers.get('Content-Type', '').lower().startswith('text/html'):
-            raise RuntimeError("Unauthenticated.")
+        self.__check_authentication(response)
 
         return response.json()
             
@@ -135,9 +148,7 @@ class CxReportClientV1:
         response = requests.get(url, headers=headers, verify=False)
         response.raise_for_status()
 
-        # Check if the response content is HTML
-        if response.headers.get('Content-Type', '').lower().startswith('text/html'):
-            raise RuntimeError("Unauthenticated.")
+        self.__check_authentication(response)
 
         return response.json()
 
@@ -157,9 +168,7 @@ class CxReportClientV1:
         response = requests.post(url, headers=headers, verify=False)
         response.raise_for_status()
 
-        # Check if the response content is HTML
-        if response.headers.get('Content-Type', '').lower().startswith('text/html'):
-            raise RuntimeError("Unauthenticated.")
+        self.__check_authentication(response)
 
         return response.json()
 
@@ -186,10 +195,8 @@ class CxReportClientV1:
 
         response = requests.post(url, headers=headers, json=data, verify=False)
         response.raise_for_status()
-        
-        # If content type is HTML, then the user is not authenticated
-        if response.headers.get('Content-Type', '').lower().startswith('text/html'):
-            raise RuntimeError("Unauthenticated.")
+
+        self.__check_authentication(response)
 
         return response.json()
     
