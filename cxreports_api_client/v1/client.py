@@ -541,5 +541,14 @@ class CxReportClientV1:
         if 'timezone' in query_params and isinstance(query_params['timezone'], str):
             params['timezone'] = query_params['timezone']
 
+        if 'lang' in query_params and isinstance(query_params['lang'], str):
+            params['lang'] = query_params['lang']
+
+        if 'type' in query_params and isinstance(query_params['type'], str):
+            params['type'] = query_params['type']
+
+        if 'includeAttachments' in query_params and isinstance(query_params['includeAttachments'], bool):
+            params['includeAttachments'] = query_params['includeAttachments']
+
         return f"{url}?{urllib.parse.urlencode(params)}"
     
