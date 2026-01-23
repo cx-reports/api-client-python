@@ -18,7 +18,9 @@ class CxReportClientV1:
         token (str): The authentication token used for API requests.
     """
     def __init__(self, base_url:str, default_workspace_id:int, token:str):
-        self.url = base_url
+        self.url = base_url.strip().strip("/")
+        self.workspace_id = default_workspace_id
+        self.token = token
         self.token = token
         self.workspace_id = default_workspace_id
 
