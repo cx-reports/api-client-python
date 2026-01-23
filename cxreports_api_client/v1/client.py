@@ -3,7 +3,7 @@ import base64
 import urllib.parse
 import json
 from functools import wraps
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any
 
 
 class CxReportClientV1:
@@ -67,7 +67,7 @@ class CxReportClientV1:
             raise RuntimeError("Unauthenticated.")
 
     @__handle_requests_exceptions
-    def get_pdf(self, reportId: int, params: dict = None, workspace_id:int = None):
+    def get_pdf(self, report_id: int, params: dict = None, workspace_id:int = None):
         """
         Fetch a PDF report.
 
@@ -82,7 +82,7 @@ class CxReportClientV1:
             RuntimeError: If any request or processing error occurs.
         """
         headers = self.__get_headers()
-        url = self.__get_url_with_workspace(f"reports/{reportId}/pdf", workspace_id)
+        url = self.__get_url_with_workspace(f"reports/{report_id}/pdf", workspace_id)
 
         url = self.__append_query_params(url, params)
         print(url)
@@ -135,7 +135,7 @@ class CxReportClientV1:
         Fetch the list of reports by type.
 
         Args:
-            report_type (str): The type of report to fetch.
+            type (str): The type of report to fetch.
 
         Returns:
             List[Dict[str, Any]]: A list of reports.
@@ -178,12 +178,12 @@ class CxReportClientV1:
     
 
     @__handle_requests_exceptions
-    def post_pdf(self, reportId: int, request_body: dict = None, workspace_id: int = None):
+    def post_pdf(self, report_id: int, request_body: dict = None, workspace_id: int = None):
         """
         Export a report to PDF using POST method (allows passing data in request body).
 
         Args:
-            reportId (int): The ID of the report or report type code.
+            report_id (int): The ID of the report or report type code.
             request_body (Optional[Dict[str, Any]]): Request body containing:
                 - params (dict): Report parameters
                 - data (dict): JSON data to be passed to the report
@@ -202,7 +202,7 @@ class CxReportClientV1:
         headers = self.__get_headers()
         headers["Content-Type"] = "application/json"
 
-        url = self.__get_url_with_workspace(f"reports/{reportId}/pdf", workspace_id)
+        url = self.__get_url_with_workspace(f"reports/{report_id}/pdf", workspace_id)
 
         if request_body is None:
             request_body = {}
@@ -221,12 +221,12 @@ class CxReportClientV1:
         return response.content
     
     @__handle_requests_exceptions
-    def start_report_export(self, reportId: int, request_body: dict = None, workspace_id: int = None):
+    def start_report_export(self, report_id: int, request_body: dict = None, workspace_id: int = None):
         """
         Start asynchronous report generation.
 
         Args:
-            reportId (int): The ID of the report or report type code.
+            report_id (int): The ID of the report or report type code.
             request_body (Optional[Dict[str, Any]]): Request body containing:
                 - params (dict): Report parameters
                 - data (dict): JSON data to be passed to the report
@@ -247,7 +247,7 @@ class CxReportClientV1:
         headers = self.__get_headers()
         headers["Content-Type"] = "application/json"
 
-        url = self.__get_url_with_workspace(f"reports/{reportId}/export", workspace_id)
+        url = self.__get_url_with_workspace(f"reports/{report_id}/export", workspace_id)
 
         if request_body is None:
             request_body = {}
