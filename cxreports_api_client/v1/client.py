@@ -69,13 +69,16 @@ class CxReportClientV1:
             raise RuntimeError("Unauthenticated.")
 
     @__handle_requests_exceptions
-    def get_pdf(self, report_id: int, params: dict = None, workspace_id:int = None):
+    def get_pdf(self, report_id: int, params: dict = None, workspace_id: int = None, theme: str = None, template: str = None):
         """
         Fetch a PDF report.
 
         Args:
             report_id (int): The ID of the report.
-            query_params (Optional[Dict[str, Any]]): Optional query parameters for the request.
+            params (Optional[Dict[str, Any]]): Optional query parameters.
+            workspace_id (int, optional): The workspace ID.
+            theme (str, optional): Theme for PDF export/generation.
+            template (str, optional): Template for PDF export/generation.
 
         Returns:
             bytes: The PDF content.
@@ -83,11 +86,21 @@ class CxReportClientV1:
         Raises:
             RuntimeError: If any request or processing error occurs.
         """
+        if params is None:
+            params = {}
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"reports/{report_id}/pdf", workspace_id)
 
         url = self.__append_query_params(url, params)
-        print(url)
+
+        extra = {}
+        if theme is not None:
+            extra["theme"] = theme
+        if template is not None:
+            extra["template"] = template
+        if extra:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}{urllib.parse.urlencode(extra)}"
 
         response = requests.get(url, headers=headers, verify=False)
         response.raise_for_status()
@@ -109,6 +122,48 @@ class CxReportClientV1:
 
         self.__check_authentication(response)
 
+        return response.json()
+
+    @__handle_requests_exceptions
+    def get_themes(self, workspace_id: int = None):
+        """
+        Get the list of themes for the workspace.
+
+        Args:
+            workspace_id (int, optional): The workspace ID. If not provided, uses the default workspace.
+
+        Returns:
+            List[Dict[str, Any]]: A list of themes, each with code (str), name (str), and id (int).
+
+        Raises:
+            RuntimeError: If any request or processing error occurs.
+        """
+        headers = self.__get_headers()
+        url = self.__get_url_with_workspace("themes", workspace_id)
+        response = requests.get(url, headers=headers, verify=False)
+        response.raise_for_status()
+        self.__check_authentication(response)
+        return response.json()
+
+    @__handle_requests_exceptions
+    def get_templates(self, workspace_id: int = None):
+        """
+        Get the list of report templates for the workspace.
+
+        Args:
+            workspace_id (int, optional): The workspace ID. If not provided, uses the default workspace.
+
+        Returns:
+            List[Dict[str, Any]]: A list of report templates, each with code (str), name (str), and id (int).
+
+        Raises:
+            RuntimeError: If any request or processing error occurs.
+        """
+        headers = self.__get_headers()
+        url = self.__get_url_with_workspace("templates", workspace_id)
+        response = requests.get(url, headers=headers, verify=False)
+        response.raise_for_status()
+        self.__check_authentication(response)
         return response.json()
 
     @__handle_requests_exceptions
@@ -193,6 +248,8 @@ class CxReportClientV1:
                 - timezone (str): Preferred timezone
                 - format (str): Document format (default: "pdf")
                 - includeAttachments (bool): Whether to include attachments
+                - theme (str): Theme for PDF export/generation
+                - template (str): Template for PDF export/generation
             workspace_id (int, optional): The workspace ID.
 
         Returns:
@@ -238,6 +295,8 @@ class CxReportClientV1:
                 - includeAttachments (bool): Whether to zip the report and data attachments
                 - excludePages (list[int]): Array of page numbers to exclude from the report
                 - tempDataId (int): ID of the temporary data object
+                - theme (str): Theme for PDF export/generation
+                - template (str): Template for PDF export/generation
             workspace_id (int, optional): The workspace ID.
 
         Returns:
@@ -552,5 +611,9 @@ class CxReportClientV1:
         if 'includeAttachments' in query_params and isinstance(query_params['includeAttachments'], bool):
             params['includeAttachments'] = query_params['includeAttachments']
 
+            if 'theme' in query_params and isinstance(query_params['theme'], str):
+                params['theme'] = query_params['theme']
+            if 'template' in query_params and isinstance(query_params['template'], str):
+                params['template'] = query_params['template']
         return f"{url}?{urllib.parse.urlencode(params)}"
     
