@@ -21,8 +21,6 @@ class CxReportClientV1:
         self.url = base_url.strip().strip("/")
         self.workspace_id = default_workspace_id
         self.token = token
-        self.token = token
-        self.workspace_id = default_workspace_id
 
     def __get_headers(self):
         return {
@@ -88,24 +86,18 @@ class CxReportClientV1:
         """
         if params is None:
             params = {}
+        if theme is not None:
+            params["theme"] = theme
+        if template is not None:
+            params["template"] = template
+
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"reports/{report_id}/pdf", workspace_id)
-
         url = self.__append_query_params(url, params)
 
-        extra = {}
-        if theme is not None:
-            extra["theme"] = theme
-        if template is not None:
-            extra["template"] = template
-        if extra:
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}{urllib.parse.urlencode(extra)}"
-
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         if "application/pdf" not in response.headers.get("Content-Type", "").lower():
             raise RuntimeError("Invalid content type, expected PDF")
@@ -118,9 +110,8 @@ class CxReportClientV1:
         url = self.__get_url_with_workspace("report-types", workspace_id)
 
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         return response.json()
 
@@ -141,8 +132,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace("themes", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
         self.__check_authentication(response)
+        response.raise_for_status()
         return response.json()
 
     @__handle_requests_exceptions
@@ -162,8 +153,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace("templates", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
         self.__check_authentication(response)
+        response.raise_for_status()
         return response.json()
 
     @__handle_requests_exceptions
@@ -180,9 +171,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = f"{self.url}/api/v1/workspaces"
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         return response.json()
             
@@ -203,9 +193,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"reports?type={type}", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         return response.json()
 
@@ -227,9 +216,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"reports/{report_id}/pages", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         return response.json()
     
@@ -270,9 +258,8 @@ class CxReportClientV1:
             request_body["format"] = "pdf"
 
         response = requests.post(url, headers=headers, json=request_body, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         if "application/pdf" not in response.headers.get("Content-Type", "").lower():
             raise RuntimeError("Invalid content type, expected PDF")
@@ -318,10 +305,9 @@ class CxReportClientV1:
 
         response = requests.post(url, headers=headers, json=request_body, verify=False)
 
+        self.__check_authentication(response)
         if response.status_code != 202:
             response.raise_for_status()
-
-        self.__check_authentication(response)
 
         return response.json()
 
@@ -342,8 +328,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"jobs", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
         self.__check_authentication(response)
+        response.raise_for_status()
         return response.json()
     
     @__handle_requests_exceptions
@@ -370,8 +356,8 @@ class CxReportClientV1:
         if request_body is None:
             request_body = {}
         response = requests.post(url, headers=headers, json=request_body, verify=False)
-        response.raise_for_status()
         self.__check_authentication(response)
+        response.raise_for_status()
         return response.json()
     
     @__handle_requests_exceptions
@@ -396,8 +382,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"jobs/{job_id}/runs/{run_id}/status", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
         self.__check_authentication(response)
+        response.raise_for_status()
         return response.json()
     
     @__handle_requests_exceptions
@@ -422,8 +408,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"jobs/{job_id}/runs/{run_id}/generate-review-document", workspace_id)
         response = requests.post(url, headers=headers, verify=False)
-        response.raise_for_status()
         self.__check_authentication(response)
+        response.raise_for_status()
         return response.json()
     
     @__handle_requests_exceptions
@@ -448,8 +434,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"jobs/{job_id}/runs/{run_id}/deliver", workspace_id)
         response = requests.post(url, headers=headers, verify=False)
-        response.raise_for_status()
         self.__check_authentication(response)
+        response.raise_for_status()
         return response.json()
     
     @__handle_requests_exceptions
@@ -466,9 +452,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = f"{self.url}/api/v1/nonce-tokens"
         response = requests.post(url, headers=headers, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         return response.json()
 
@@ -494,9 +479,8 @@ class CxReportClientV1:
         }
 
         response = requests.post(url, headers=headers, json=data, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         return response.json()
     
@@ -539,9 +523,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"exports/{temp_file_id}/status", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         return response.json()
 
@@ -563,9 +546,8 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"exports/{temp_file_id}/content", workspace_id)
         response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
-
         self.__check_authentication(response)
+        response.raise_for_status()
 
         return response.content
 
@@ -611,9 +593,11 @@ class CxReportClientV1:
         if 'includeAttachments' in query_params and isinstance(query_params['includeAttachments'], bool):
             params['includeAttachments'] = query_params['includeAttachments']
 
-            if 'theme' in query_params and isinstance(query_params['theme'], str):
-                params['theme'] = query_params['theme']
-            if 'template' in query_params and isinstance(query_params['template'], str):
-                params['template'] = query_params['template']
+        if 'theme' in query_params and isinstance(query_params['theme'], str):
+            params['theme'] = query_params['theme']
+
+        if 'template' in query_params and isinstance(query_params['template'], str):
+            params['template'] = query_params['template']
+
         return f"{url}?{urllib.parse.urlencode(params)}"
     
