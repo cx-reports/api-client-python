@@ -220,13 +220,6 @@ Authentication failures (HTTP `401` / `403`) surface as `RuntimeError("Unauthent
 
 TLS certificate validation is **on by default** in this version. If you need to talk to a CxReports instance with a self-signed certificate, configure your environment's trust store rather than disabling verification.
 
-## Links
-
-- [CxReports homepage](https://cx-reports.com)
-- [API reference (Swagger)](https://master.cx-reports.app/swagger)
-- [Source code](https://github.com/cx-reports/api-client-python)
-- [Issue tracker](https://github.com/cx-reports/api-client-python/issues)
-
 ## License
 
 MIT
