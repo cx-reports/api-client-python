@@ -2,6 +2,7 @@ import requests
 import base64
 import urllib.parse
 import json
+import warnings
 from functools import wraps
 from typing import Dict, Any
 
@@ -67,7 +68,7 @@ class CxReportClientV1:
             raise RuntimeError("Unauthenticated.")
 
     @__handle_requests_exceptions
-    def get_pdf(self, report_id: int, params: dict = None, workspace_id: int = None, theme: str = None, template: str = None):
+    def get_pdf(self, report_id: int = None, params: dict = None, workspace_id: int = None, theme: str = None, template: str = None, *, reportId: int = None):
         """
         Fetch a PDF report.
 
@@ -77,6 +78,8 @@ class CxReportClientV1:
             workspace_id (int, optional): The workspace ID.
             theme (str, optional): Theme for PDF export/generation.
             template (str, optional): Template for PDF export/generation.
+            reportId (int, deprecated): Old name for ``report_id``. Kept for backwards
+                compatibility; emits a DeprecationWarning when used.
 
         Returns:
             bytes: The PDF content.
@@ -84,6 +87,17 @@ class CxReportClientV1:
         Raises:
             RuntimeError: If any request or processing error occurs.
         """
+        if reportId is not None:
+            warnings.warn(
+                "'reportId' is deprecated; use 'report_id' instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+            if report_id is None:
+                report_id = reportId
+        if report_id is None:
+            raise TypeError("get_pdf() missing required argument: 'report_id'")
+
         if params is None:
             params = {}
         if theme is not None:
@@ -95,7 +109,7 @@ class CxReportClientV1:
         url = self.__get_url_with_workspace(f"reports/{report_id}/pdf", workspace_id)
         url = self.__append_query_params(url, params)
 
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
 
@@ -109,7 +123,7 @@ class CxReportClientV1:
         headers = self.__get_headers()
         url = self.__get_url_with_workspace("report-types", workspace_id)
 
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
 
@@ -131,7 +145,7 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace("themes", workspace_id)
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
         return response.json()
@@ -152,7 +166,7 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace("templates", workspace_id)
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
         return response.json()
@@ -170,19 +184,20 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = f"{self.url}/api/v1/workspaces"
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
 
         return response.json()
             
     @__handle_requests_exceptions
-    def get_reports(self, type: str, workspace_id:int = None):
+    def get_reports(self, type: str = None, workspace_id:int = None):
         """
-        Fetch the list of reports by type.
+        Fetch the list of reports, optionally filtered by report type.
 
         Args:
-            type (str): The type of report to fetch.
+            type (str, optional): Filter by given report type. If omitted, all reports are returned.
+            workspace_id (int, optional): The workspace ID. If not provided, uses the default workspace.
 
         Returns:
             List[Dict[str, Any]]: A list of reports.
@@ -191,8 +206,10 @@ class CxReportClientV1:
             RuntimeError: If any request or processing error occurs.
         """
         headers = self.__get_headers()
-        url = self.__get_url_with_workspace(f"reports?type={type}", workspace_id)
-        response = requests.get(url, headers=headers, verify=False)
+        url = self.__get_url_with_workspace("reports", workspace_id)
+        if type is not None:
+            url = self.__append_query_params(url, {"type": type})
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
 
@@ -215,7 +232,7 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"reports/{report_id}/pages", workspace_id)
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
 
@@ -257,7 +274,7 @@ class CxReportClientV1:
         if "format" not in request_body:
             request_body["format"] = "pdf"
 
-        response = requests.post(url, headers=headers, json=request_body, verify=False)
+        response = requests.post(url, headers=headers, json=request_body)
         self.__check_authentication(response)
         response.raise_for_status()
 
@@ -303,7 +320,7 @@ class CxReportClientV1:
         if "format" not in request_body:
             request_body["format"] = "pdf"
 
-        response = requests.post(url, headers=headers, json=request_body, verify=False)
+        response = requests.post(url, headers=headers, json=request_body)
 
         self.__check_authentication(response)
         if response.status_code != 202:
@@ -327,7 +344,7 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"jobs", workspace_id)
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
         return response.json()
@@ -355,7 +372,7 @@ class CxReportClientV1:
         url = self.__get_url_with_workspace(f"jobs/{job_id}/runs", workspace_id)
         if request_body is None:
             request_body = {}
-        response = requests.post(url, headers=headers, json=request_body, verify=False)
+        response = requests.post(url, headers=headers, json=request_body)
         self.__check_authentication(response)
         response.raise_for_status()
         return response.json()
@@ -381,7 +398,7 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"jobs/{job_id}/runs/{run_id}/status", workspace_id)
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
         return response.json()
@@ -407,7 +424,7 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"jobs/{job_id}/runs/{run_id}/generate-review-document", workspace_id)
-        response = requests.post(url, headers=headers, verify=False)
+        response = requests.post(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
         return response.json()
@@ -416,27 +433,23 @@ class CxReportClientV1:
     def deliver_job_run_entries(self, job_id: int, run_id: int, workspace_id: int = None):
         """
         Deliver (finalize) the entries from a completed job run.
-    
+
         This should be called after the job run is finished and any required reviews
         are completed. It triggers the final delivery of all job run entries.
-    
+
         Args:
             job_id (int): The ID of the job.
             run_id (int): The ID of the job run.
             workspace_id (int, optional): The workspace ID. If not provided, uses the default workspace.
-    
-        Returns:
-            Dict[str, Any]: Delivery confirmation response.
-    
+
         Raises:
             RuntimeError: If any request or processing error occurs.
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"jobs/{job_id}/runs/{run_id}/deliver", workspace_id)
-        response = requests.post(url, headers=headers, verify=False)
+        response = requests.post(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
-        return response.json()
     
     @__handle_requests_exceptions
     def create_auth_token(self):
@@ -451,19 +464,20 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = f"{self.url}/api/v1/nonce-tokens"
-        response = requests.post(url, headers=headers, verify=False)
+        response = requests.post(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
 
         return response.json()
 
     @__handle_requests_exceptions
-    def push_temporary_data(self, data:dict):
+    def push_temporary_data(self, data:dict, workspace_id: int = None):
         """
         Push temporary data to the API.
 
         Args:
             data (Dict[str, Any]): The data to be pushed.
+            workspace_id (int, optional): The workspace ID. If not provided, uses the default workspace.
 
         Returns:
             Dict[str, Any]: The response from the API.
@@ -473,12 +487,12 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
 
-        url = self.__get_url_with_workspace("temporary-data")
+        url = self.__get_url_with_workspace("temporary-data", workspace_id)
         data = {
             "content": data
         }
 
-        response = requests.post(url, headers=headers, json=data, verify=False)
+        response = requests.post(url, headers=headers, json=data)
         self.__check_authentication(response)
         response.raise_for_status()
 
@@ -522,7 +536,7 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"exports/{temp_file_id}/status", workspace_id)
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
 
@@ -545,7 +559,7 @@ class CxReportClientV1:
         """
         headers = self.__get_headers()
         url = self.__get_url_with_workspace(f"exports/{temp_file_id}/content", workspace_id)
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers)
         self.__check_authentication(response)
         response.raise_for_status()
 
